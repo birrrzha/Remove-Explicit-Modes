@@ -1,40 +1,36 @@
-Below are the steps to get your plugin running. You can also find instructions at:
+# Remove Explicit Modes
 
-  https://www.figma.com/plugin-docs/plugin-quickstart-guide/
+Figma plugin that lists **explicit variable modes** applied anywhere inside your current selection (library name + mode name only—no per-layer breakdown). Each row has a control to **clear** that explicit override on layers that use that exact collection/mode, so they inherit again from parents.
 
-This plugin template uses Typescript and NPM, two standard tools in creating JavaScript applications.
+## Use in Figma
 
-First, download Node.js which comes with NPM. This will allow you to install TypeScript and other
-libraries. You can find the download link here:
+1. Run `npm run build` (see below) so `dist/code.js` exists.
+2. **Plugins → Development → Import plugin from manifest…** and choose this folder’s `manifest.json`.
+3. Open the plugin, select frames or other layers on the canvas, and review the list.
+4. Use the remove action on a row to drop that explicit mode on matching layers in the selection subtree.
 
-  https://nodejs.org/en/download/
+**Labels**
 
-Next, install TypeScript using the command:
+- **Published variables:** Shows the **team library** name when it can be resolved; otherwise the collection name.
+- **Local variables:** Shows the **current file** name (document name).
+- If the same library + mode label would appear twice (different collections), the library line includes **`· Collection name`** for disambiguation.
 
-  npm install -g typescript
+## Development
 
-Finally, in the directory of your plugin, get the latest type definitions for the plugin API by running:
+Requirements: [Node.js](https://nodejs.org/) (includes npm).
 
-  npm install --save-dev @figma/plugin-typings
+```bash
+npm install
+npm run build      # compile plugin code → dist/code.js
+npm run watch      # rebuild on save
+```
 
-If you are familiar with JavaScript, TypeScript will look very familiar. In fact, valid JavaScript code
-is already valid Typescript code.
+The UI is `ui.html`; it is inlined into the bundle via webpack for `figma.showUI`. Official plugin API overview: [Plugin Quickstart](https://www.figma.com/plugin-docs/plugin-quickstart-guide/).
 
-TypeScript adds type annotations to variables. This allows code editors such as Visual Studio Code
-to provide information about the Figma API while you are writing code, as well as help catch bugs
-you previously didn't notice.
+## Project layout
 
-For more information, visit https://www.typescriptlang.org/
-
-Using TypeScript requires a compiler to convert TypeScript (code.ts) into JavaScript (code.js)
-for the browser to run.
-
-We recommend writing TypeScript code using Visual Studio code:
-
-1. Download Visual Studio Code if you haven't already: https://code.visualstudio.com/.
-2. Open this directory in Visual Studio Code.
-3. Compile TypeScript to JavaScript: Run the "Terminal > Run Build Task..." menu item,
-    then select "npm: watch". You will have to do this again every time
-    you reopen Visual Studio Code.
-
-That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
+| Path | Role |
+|------|------|
+| `src/code.ts` | Main thread: scan selection, resolve names, clear explicit modes |
+| `ui.html` | Plugin UI (list + remove actions) |
+| `dist/code.js` | Built output referenced by `manifest.json` |
