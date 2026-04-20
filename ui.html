@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font:
+          11px/1.4 Inter,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        color: var(--figma-color-text, rgba(0, 0, 0, 0.9));
+        background: var(--figma-color-bg, #fff);
+      }
+      .wrap {
+        padding: 12px;
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+      .hint {
+        margin: 0 0 12px;
+        color: var(--figma-color-text-secondary, rgba(0, 0, 0, 0.55));
+        font-size: 11px;
+      }
+      .empty {
+        color: var(--figma-color-text-secondary, rgba(0, 0, 0, 0.55));
+        font-size: 11px;
+        padding: 8px 0;
+      }
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      li {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--figma-color-border, rgba(0, 0, 0, 0.08));
+      }
+      li:last-child {
+        border-bottom: none;
+      }
+      .meta {
+        flex: 1;
+        min-width: 0;
+      }
+      .library {
+        font-weight: 500;
+        word-break: break-word;
+      }
+      .mode {
+        margin-top: 2px;
+        color: var(--figma-color-text-secondary, rgba(0, 0, 0, 0.55));
+        word-break: break-word;
+      }
+      .remove {
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        margin-top: -2px;
+        border: none;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--figma-color-text-secondary, rgba(0, 0, 0, 0.55));
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .remove:hover {
+        background: var(--figma-color-bg-hover, rgba(0, 0, 0, 0.06));
+        color: var(--figma-color-text-danger, #d93025);
+      }
+      .remove:focus-visible {
+        outline: 2px solid var(--figma-color-border-selected, #0d99ff);
+        outline-offset: 1px;
+      }
+      .remove svg {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Explicit variable modes</h1>
+      <p class="hint" id="hint">
+        Unique modes applied inside your selection. Remove clears the override on layers that use
+        this exact mode.
+      </p>
+      <div class="empty" id="empty" hidden></div>
+      <ul id="list"></ul>
+    </div>
+    <script>
+      const listEl = document.getElementById('list')
+      const emptyEl = document.getElementById('empty')
+      const hintEl = document.getElementById('hint')
+
+      function removeIconSvg() {
+        const ns = 'http://www.w3.org/2000/svg'
+        const svg = document.createElementNS(ns, 'svg')
+        svg.setAttribute('width', '16')
+        svg.setAttribute('height', '16')
+        svg.setAttribute('viewBox', '0 0 16 16')
+        svg.setAttribute('fill', 'none')
+        const p = document.createElementNS(ns, 'path')
+        p.setAttribute(
+          'd',
+          'M5 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V3h2.5a.5.5 0 0 1 0 1h-.557l-.7 9.1A1.5 1.5 0 0 1 10.75 14.5h-5.5a1.5 1.5 0 0 1-1.493-1.4l-.7-9.1H2.5a.5.5 0 0 1 0-1H5v-.5Zm1 0V3h4v-.5H6Zm-1.246 1h6.492l.693 9.05a.5.5 0 0 1-.498.45h-5.5a.5.5 0 0 1-.498-.45l.693-9.05ZM6.5 5.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0v-5Zm3 0a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0v-5Z',
+        )
+        p.setAttribute('fill', 'currentColor')
+        svg.appendChild(p)
+        return svg
+      }
+
+      function render(entries, selectionEmpty) {
+        listEl.innerHTML = ''
+        if (selectionEmpty) {
+          emptyEl.hidden = false
+          emptyEl.textContent = 'Select something on the canvas to scan for explicit modes.'
+          hintEl.hidden = true
+          return
+        }
+        hintEl.hidden = false
+        if (!entries.length) {
+          emptyEl.hidden = false
+          emptyEl.textContent = 'No explicit variable modes in this selection.'
+          return
+        }
+        emptyEl.hidden = true
+        for (const e of entries) {
+          const li = document.createElement('li')
+          const meta = document.createElement('div')
+          meta.className = 'meta'
+          const lib = document.createElement('div')
+          lib.className = 'library'
+          lib.textContent = e.libraryName
+          const mode = document.createElement('div')
+          mode.className = 'mode'
+          mode.textContent = e.modeName
+          meta.appendChild(lib)
+          meta.appendChild(mode)
+          const btn = document.createElement('button')
+          btn.type = 'button'
+          btn.className = 'remove'
+          btn.title = 'Remove explicit mode'
+          btn.setAttribute('aria-label', 'Remove explicit mode')
+          btn.appendChild(removeIconSvg())
+          btn.addEventListener('click', () => {
+            parent.postMessage(
+              { pluginMessage: { type: 'remove-explicit', collectionId: e.collectionId, modeId: e.modeId } },
+              '*',
+            )
+          })
+          li.appendChild(meta)
+          li.appendChild(btn)
+          listEl.appendChild(li)
+        }
+      }
+
+      window.onmessage = (event) => {
+        const msg = event.data.pluginMessage
+        if (!msg || msg.type !== 'explicit-list') return
+        render(msg.entries, msg.selectionEmpty)
+      }
+    </script>
+  </body>
+</html>
